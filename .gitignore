@@ -1,0 +1,8 @@
+node_modules/
+.env
+
+# Sessão do WhatsApp (quem tem esta pasta controla o número do bot)
+auth/
+
+# Último texto de descrição já processado
+data/
