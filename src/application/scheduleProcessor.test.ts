@@ -5,7 +5,16 @@ import type { Participante } from '../domain/matchParticipants';
 import type { ArmazenamentoDeDescricao, Mensageiro } from './ports';
 import { criarProcessadorDeEscala } from './scheduleProcessor';
 
-const DESCRICAO = 'ESCALA 11/2026\n05/11 | Ana: voz; Lucas: bateria\n12/11 | Ana: back';
+const DESCRICAO = [
+  'ESCALA DEZEMBRO 2026',
+  '',
+  '02/12 (QUARTA-FEIRA).',
+  '- Transmissão YouTube: Ana.',
+  '- Som: Lucas.',
+  '',
+  '06/12 (DOMINGO) - Manhã.',
+  '- Transmissão YouTube: Ana.',
+].join('\n');
 
 const ANA = 'ana@s.whatsapp.net';
 const LUCAS = 'lucas@s.whatsapp.net';
@@ -67,8 +76,11 @@ test('envia a cada pessoa só a sua parte da escala', async () => {
 
   const paraAna = privados.find((privado) => privado.jid === ANA);
   const paraLucas = privados.find((privado) => privado.jid === LUCAS);
-  assert.equal(paraAna?.texto, 'Olá, Ana. Sua escala de 11/2026:\n• 05/11 — voz\n• 12/11 — back');
-  assert.equal(paraLucas?.texto, 'Olá, Lucas. Sua escala de 11/2026:\n• 05/11 — bateria');
+  assert.equal(
+    paraAna?.texto,
+    'Olá, Ana. Sua escala de 12/2026:\n• 02/12 — Transmissão YouTube\n• 06/12 — Manhã — Transmissão YouTube',
+  );
+  assert.equal(paraLucas?.texto, 'Olá, Lucas. Sua escala de 12/2026:\n• 02/12 — Som');
 });
 
 test('guarda a descrição processada', async () => {

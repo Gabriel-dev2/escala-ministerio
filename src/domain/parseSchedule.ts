@@ -12,9 +12,9 @@ export interface PessoaEscala {
 }
 
 export interface Escala {
-  /** Primeira linha da descrição, ex.: "ESCALA 11/2026". */
+  /** Primeira linha da descrição, ex.: "ESCALA DEZEMBRO 2026". */
   titulo: string;
-  /** Mês e ano da escala, ex.: "11/2026". */
+  /** Mês e ano da escala, ex.: "12/2026". */
   mes: string;
   pessoas: PessoaEscala[];
 }
@@ -24,11 +24,6 @@ export type ResultadoParse =
   | { ok: false; erros: string[] };
 
 type Leitura<T> = { ok: true; valor: T } | { ok: false; erros: string[] };
-
-interface LinhaNumerada {
-  numero: number;
-  texto: string;
-}
 
 interface Titulo {
   texto: string;
@@ -41,19 +36,40 @@ interface Designacao {
   funcao: string;
 }
 
-interface LinhaDeEscala {
-  data: string;
+interface BlocoDeData {
+  rotulo: string;
   designacoes: Designacao[];
 }
 
-const REGEX_TITULO = /^escala\s+(\d{1,2})\/(\d{4})$/i;
-const REGEX_LINHA = /^(\d{1,2})\/(\d{1,2})\s*\|\s*(.*)$/;
+const MESES: Record<string, number> = {
+  janeiro: 1,
+  fevereiro: 2,
+  marco: 3,
+  março: 3,
+  abril: 4,
+  maio: 5,
+  junho: 6,
+  julho: 7,
+  agosto: 8,
+  setembro: 9,
+  outubro: 10,
+  novembro: 11,
+  dezembro: 12,
+};
+
+const REGEX_TITULO = /^escala\s+([a-záéíóúâêôãõç]+)\s+(\d{4})\.?$/i;
+
+/** Captura "dd/mm" e um sufixo opcional como "(DOMINGO) - Manhã." */
+const REGEX_DATA = /^(\d{1,2})\/(\d{1,2})\s*(.*)$/;
+
+/** Captura "- Função: Nome." ou marcador de lista do WhatsApp ("•⁠  ⁠Função: Nome.") */
+const REGEX_DESIGNACAO = /^[-–—•*]\s+(.+)$/;
 
 /** Minúsculo, sem acento e com espaços simples: "  João  " vira "joao". */
 export function normalizarNome(nome: string): string {
   return nome
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
@@ -62,37 +78,47 @@ export function normalizarNome(nome: string): string {
 /**
  * Lê a descrição do grupo no formato:
  *
- *   ESCALA 11/2026
- *   05/11 | Ana: voz; João: teclado
- *   12/11 | Ana: back; Maria: voz
+ *   ESCALA DEZEMBRO 2026
+ *
+ *   02/12 (QUARTA-FEIRA).
+ *   - Transmissão YouTube e som: Flávio.
+ *   - Projeção Slide: Natali.
+ *
+ *   06/12 (DOMINGO) - Manhã.
+ *   - Transmissão YouTube: Gabriel F.
+ *   - Projeção Slide: Lorena.
+ *   - Som: Guilheme.
  *
  * Devolve a escala agrupada por pessoa ou a lista de problemas encontrados.
  */
 export function parseSchedule(descricao: string): ResultadoParse {
-  const [linhaDoTitulo, ...linhasDeData] = numerarLinhasNaoVazias(descricao);
-  if (!linhaDoTitulo) return falha(['A descrição está vazia.']);
+  const linhas = numerarLinhasNaoVazias(descricao);
+  if (linhas.length === 0) return falha(['A descrição está vazia.']);
 
-  const titulo = lerTitulo(linhaDoTitulo.texto);
+  const titulo = lerTitulo(linhas[0].texto);
   if (!titulo.ok) return falha(titulo.erros);
 
-  const linhas = reunir(linhasDeData.map((linha) => lerLinhaDeData(linha, titulo.valor.ano)));
-  if (!linhas.ok) return falha(linhas.erros);
-  if (linhas.valor.length === 0) return falha(['Não encontrei nenhuma data depois do título.']);
+  const blocos = agruparBlocos(linhas.slice(1), titulo.valor.ano);
+  if (!blocos.ok) return falha(blocos.erros);
+  if (blocos.valor.length === 0) return falha(['Não encontrei nenhuma data depois do título.']);
 
   return {
     ok: true,
     escala: {
       titulo: titulo.valor.texto,
       mes: formatarMes(titulo.valor.mes, titulo.valor.ano),
-      pessoas: agruparPorPessoa(linhas.valor),
+      pessoas: agruparPorPessoa(blocos.valor),
     },
   };
 }
 
-function numerarLinhasNaoVazias(descricao: string): LinhaNumerada[] {
+function numerarLinhasNaoVazias(descricao: string): Array<{ numero: number; texto: string }> {
   return descricao
     .split(/\r?\n/)
-    .map((texto, indice) => ({ numero: indice + 1, texto: texto.trim() }))
+    .map((texto, indice) => ({
+      numero: indice + 1,
+      texto: texto.replace(/[\u200B\u2060\uFEFF]/g, '').trim(),
+    }))
     .filter((linha) => linha.texto !== '');
 }
 
@@ -100,61 +126,134 @@ function lerTitulo(linha: string): Leitura<Titulo> {
   const texto = linha.replace(/\s+/g, ' ');
   const correspondencia = REGEX_TITULO.exec(texto);
   if (!correspondencia) {
-    return erro(`A primeira linha deve ser o título, como "ESCALA 11/2026" (encontrei "${texto}").`);
+    return erro(`A primeira linha deve ser o título, como "ESCALA DEZEMBRO 2026" (encontrei "${texto}").`);
   }
 
-  const mes = Number(correspondencia[1]);
+  const nomeMes = correspondencia[1].toLowerCase();
+  const mes = MESES[nomeMes];
   const ano = Number(correspondencia[2]);
-  if (!mesExiste(mes)) return erro(`Mês inválido no título: "${texto}".`);
+
+  if (!mes) {
+    return erro(`Mês desconhecido no título: "${correspondencia[1]}".`);
+  }
 
   return sucesso({ texto, mes, ano });
 }
 
-function lerLinhaDeData(linha: LinhaNumerada, ano: number): Leitura<LinhaDeEscala> {
-  const correspondencia = REGEX_LINHA.exec(linha.texto);
-  if (!correspondencia) {
-    return erro(`Linha ${linha.numero}: "${linha.texto}" não segue o modelo "dd/mm | Nome: função".`);
+/**
+ * Agrupa as linhas em blocos: cada bloco começa com uma linha de data
+ * e é seguido por linhas de designação ("- Função: Nome.").
+ */
+function agruparBlocos(
+  linhas: Array<{ numero: number; texto: string }>,
+  ano: number,
+): Leitura<BlocoDeData[]> {
+  const blocos: BlocoDeData[] = [];
+  const erros: string[] = [];
+  let blocoAtual: { rotulo: string; designacoes: Designacao[]; numeroLinha: number } | undefined;
+
+  for (const linha of linhas) {
+    const dataMatch = REGEX_DATA.exec(linha.texto);
+    if (dataMatch) {
+      // Fecha o bloco anterior se houver
+      if (blocoAtual) {
+        if (blocoAtual.designacoes.length === 0) {
+          erros.push(`Linha ${blocoAtual.numeroLinha}: nenhuma pessoa informada para ${blocoAtual.rotulo}.`);
+        } else {
+          blocos.push({ rotulo: blocoAtual.rotulo, designacoes: blocoAtual.designacoes });
+        }
+      }
+
+      const [, diaTexto, mesTexto, sufixo] = dataMatch;
+      const data = formatarData(Number(diaTexto), Number(mesTexto), ano);
+      if (!data) {
+        erros.push(`Linha ${linha.numero}: a data ${diaTexto}/${mesTexto} não existe.`);
+        blocoAtual = undefined;
+        continue;
+      }
+
+      const rotulo = montarRotulo(data, sufixo);
+      blocoAtual = { rotulo, designacoes: [], numeroLinha: linha.numero };
+      continue;
+    }
+
+    const desigMatch = REGEX_DESIGNACAO.exec(linha.texto);
+    if (desigMatch && blocoAtual) {
+      const resultado = lerDesignacao(desigMatch[1], linha.numero);
+      if (!resultado.ok) {
+        erros.push(...resultado.erros);
+      } else {
+        blocoAtual.designacoes.push(...resultado.valor);
+      }
+      continue;
+    }
+
+    // Linha que não é data nem designação
+    erros.push(`Linha ${linha.numero}: "${linha.texto}" não segue o formato esperado.`);
   }
 
-  const [, diaTexto, mesTexto, corpo] = correspondencia;
-  const data = formatarData(Number(diaTexto), Number(mesTexto), ano);
-  if (!data) return erro(`Linha ${linha.numero}: a data ${diaTexto}/${mesTexto} não existe.`);
-
-  const trechos = separarTrechos(corpo);
-  if (trechos.length === 0) return erro(`Linha ${linha.numero}: nenhuma pessoa informada para ${data}.`);
-
-  const designacoes = reunir(trechos.map((trecho) => lerDesignacao(trecho, linha.numero)));
-  if (!designacoes.ok) return designacoes;
-
-  return sucesso({ data, designacoes: designacoes.valor });
-}
-
-function separarTrechos(corpo: string): string[] {
-  return corpo
-    .split(';')
-    .map((trecho) => trecho.trim())
-    .filter((trecho) => trecho !== '');
-}
-
-function lerDesignacao(trecho: string, numeroLinha: number): Leitura<Designacao> {
-  const [nomeBruto, ...restoDoTrecho] = trecho.split(':');
-  const nome = nomeBruto.trim();
-  const funcao = restoDoTrecho.join(':').trim();
-
-  if (nome === '' || funcao === '') {
-    return erro(`Linha ${numeroLinha}: "${trecho}" não segue o modelo "Nome: função".`);
+  // Fecha o último bloco
+  if (blocoAtual) {
+    if (blocoAtual.designacoes.length === 0) {
+      erros.push(`Linha ${blocoAtual.numeroLinha}: nenhuma pessoa informada para ${blocoAtual.rotulo}.`);
+    } else {
+      blocos.push({ rotulo: blocoAtual.rotulo, designacoes: blocoAtual.designacoes });
+    }
   }
-  return sucesso({ nome, funcao });
+
+  if (erros.length > 0) return { ok: false, erros };
+  return sucesso(blocos);
 }
 
-function agruparPorPessoa(linhas: LinhaDeEscala[]): PessoaEscala[] {
+/** Monta o rótulo da data, ex.: "02/12" ou "06/12 — Manhã" */
+function montarRotulo(data: string, sufixo: string): string {
+  const semDiaSemana = sufixo.replace(/\([^)]*\)/g, '').trim();
+  const complemento = semDiaSemana
+    .replace(/^[-–—.\s]+/, '')
+    .replace(/[.\s]+$/, '')
+    .trim();
+
+  if (complemento === '') return data;
+  return `${data} — ${complemento}`;
+}
+
+/**
+ * Lê "Função: Nome." ou "Função: Nome1/Nome2.".
+ * Devolve uma ou mais designações (quando há "/" no nome, cria uma para cada).
+ */
+function lerDesignacao(corpo: string, numeroLinha: number): Leitura<Designacao[]> {
+  const separador = corpo.indexOf(':');
+  if (separador === -1) {
+    return erro(`Linha ${numeroLinha}: "${corpo}" não segue o modelo "Função: Nome".`);
+  }
+
+  const funcao = corpo.slice(0, separador).trim();
+  const nomeBruto = corpo
+    .slice(separador + 1)
+    .replace(/\.+$/, '')
+    .trim();
+
+  if (funcao === '' || nomeBruto === '') {
+    return erro(`Linha ${numeroLinha}: "${corpo}" não segue o modelo "Função: Nome".`);
+  }
+
+  // "Davi/Thiago" → duas designações
+  const nomes = nomeBruto.split('/').map((n) => n.trim()).filter((n) => n !== '');
+  if (nomes.length === 0) {
+    return erro(`Linha ${numeroLinha}: nenhum nome encontrado em "${corpo}".`);
+  }
+
+  return sucesso(nomes.map((nome) => ({ nome, funcao })));
+}
+
+function agruparPorPessoa(blocos: BlocoDeData[]): PessoaEscala[] {
   const pessoas = new Map<string, PessoaEscala>();
 
-  for (const { data, designacoes } of linhas) {
+  for (const { rotulo, designacoes } of blocos) {
     for (const { nome, funcao } of designacoes) {
       const chave = normalizarNome(nome);
       const pessoa = pessoas.get(chave) ?? { nome, chave, itens: [] };
-      pessoa.itens.push({ data, funcao });
+      pessoa.itens.push({ data: rotulo, funcao });
       pessoas.set(chave, pessoa);
     }
   }
@@ -194,12 +293,4 @@ function erro(...erros: string[]): Leitura<never> {
 
 function falha(erros: string[]): ResultadoParse {
   return { ok: false, erros };
-}
-
-/** Junta várias leituras: se alguma falhou, devolve todos os erros; senão, todos os valores. */
-function reunir<T>(leituras: Leitura<T>[]): Leitura<T[]> {
-  const erros = leituras.flatMap((leitura) => (leitura.ok ? [] : leitura.erros));
-  if (erros.length > 0) return { ok: false, erros };
-
-  return sucesso(leituras.flatMap((leitura) => (leitura.ok ? [leitura.valor] : [])));
 }

@@ -25,10 +25,10 @@ test('monta o privado só com as datas da pessoa', () => {
 });
 
 test('o aviso de formato lista os problemas e mostra o modelo', () => {
-  const aviso = montarAvisoFormato(['Linha 2: "Ana voz" não segue o modelo.']);
+  const aviso = montarAvisoFormato(['Linha 2: "Ana som" não segue o modelo.']);
 
   assert.match(aviso, /• Linha 2/);
-  assert.match(aviso, /Modelo:\nESCALA 11\/2026/);
+  assert.match(aviso, /Modelo:\nESCALA DEZEMBRO 2026/);
 });
 
 test('o aviso de formato limita a quantidade de problemas mostrados', () => {

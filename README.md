@@ -31,23 +31,35 @@ Se o nome em `GROUP_NAME` não bater com nenhum grupo, o programa lista os grupo
 ## Formato da descrição
 
 ```text
-ESCALA 11/2026
-05/11 | Ana: voz; João: teclado; Lucas: bateria
-12/11 | Ana: back; Maria: voz
+ESCALA DEZEMBRO 2026
+
+02/12 (QUARTA-FEIRA).
+- Transmissão YouTube e som: Flávio.
+- Projeção Slide: Natali.
+
+06/12 (DOMINGO) - Manhã.
+- Transmissão YouTube: Gabriel F.
+- Projeção Slide: Lorena.
+- Som: Guilheme.
+
+12/12 (SÁBADO) - ENCONTRO DE JOVENS
+- Transmissão YouTube: Davi/Thiago.
+- Projeção Slide: Maria Cybelle.
 ```
 
-- Primeira linha: `ESCALA` + mês/ano.
-- Uma data por linha: `dd/mm | Nome: função; Nome: função`.
-- Sem acento também vale: "Joao" encontra "João".
+- Primeira linha: `ESCALA` + nome do mês + ano (ex.: `ESCALA DEZEMBRO 2026`).
+- Cada bloco começa com `dd/mm` (pode ter dia da semana entre parênteses e complemento após `-`, como `- Manhã`, `- Noite` ou nome de evento).
+- Abaixo da data, uma designação por linha: `- Função: Nome.` (se houver mais de uma pessoa na mesma função, separe com `/`, como `Davi/Thiago`).
+- Sem acento também vale: "Flavio" encontra "Flávio".
 
 Se o texto não seguir o modelo, o bot **não** manda privado e avisa uma vez no grupo o que ajustar.
 
 ## O que cada pessoa recebe
 
 ```text
-Olá, Ana. Sua escala de 11/2026:
-• 05/11 — voz
-• 12/11 — back
+Olá, Lorena. Sua escala de 12/2026:
+• 06/12 — Manhã — Projeção Slide
+• 06/12 — Noite — Projeção Slide
 ```
 
 Quem não está na escala não recebe nada. Nomes que não batem com ninguém do grupo (ou que batem com mais de uma pessoa) entram num único aviso no grupo.

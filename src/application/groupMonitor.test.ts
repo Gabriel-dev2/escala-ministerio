@@ -13,7 +13,7 @@ function montarCenario(nomesDosGrupos: string[]) {
   const enviadas: Array<{ jid: string; texto: string }> = [];
   const falhas: unknown[] = [];
   const registros = new Map<string, string>();
-  let descricao = 'ESCALA 11/2026\n05/11 | Ana: voz';
+  let descricao = 'ESCALA NOVEMBRO 2026\n05/11 (QUARTA-FEIRA).\n- Voz: Ana.';
 
   const socket: SocketDeGrupo = {
     user: { id: ID_DO_BOT },
@@ -50,7 +50,7 @@ test('ao conectar, encontra o grupo e envia a escala', async () => {
   monitor.aoConectar(socket);
   await monitor.aguardarConclusao();
 
-  assert.deepEqual(enviadas, [{ jid: ANA, texto: 'Olá, Ana. Sua escala de 11/2026:\n• 05/11 — voz' }]);
+  assert.deepEqual(enviadas, [{ jid: ANA, texto: 'Olá, Ana. Sua escala de 11/2026:\n• 05/11 — Voz' }]);
 });
 
 test('reage à mudança da descrição do grupo monitorado', async () => {
@@ -58,7 +58,7 @@ test('reage à mudança da descrição do grupo monitorado', async () => {
   monitor.aoConectar(socket);
   await monitor.aguardarConclusao();
 
-  trocarDescricao('ESCALA 12/2026\n03/12 | Ana: back');
+  trocarDescricao('ESCALA DEZEMBRO 2026\n03/12 (QUARTA-FEIRA).\n- Back: Ana.');
   monitor.aoMudarDescricao('0@g.us');
   await monitor.aguardarConclusao();
 
@@ -71,7 +71,7 @@ test('ignora mudanças de descrição de outros grupos', async () => {
   monitor.aoConectar(socket);
   await monitor.aguardarConclusao();
 
-  trocarDescricao('ESCALA 12/2026\n03/12 | Ana: back');
+  trocarDescricao('ESCALA DEZEMBRO 2026\n03/12 (QUARTA-FEIRA).\n- Back: Ana.');
   monitor.aoMudarDescricao('outro@g.us');
   await monitor.aguardarConclusao();
 

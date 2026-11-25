@@ -4,9 +4,15 @@ import type { PessoaEscala } from './parseSchedule';
 const MAXIMO_ERROS_NO_AVISO = 5;
 
 const MODELO_DESCRICAO = [
-  'ESCALA 11/2026',
-  '05/11 | Ana: voz; João: teclado',
-  '12/11 | Ana: back; Maria: voz',
+  'ESCALA DEZEMBRO 2026',
+  '',
+  '05/12 (SEXTA-FEIRA).',
+  '- Transmissão YouTube: Ana.',
+  '- Projeção Slide: João.',
+  '',
+  '07/12 (DOMINGO) - Manhã.',
+  '- Transmissão YouTube: Ana.',
+  '- Som: Maria.',
 ].join('\n');
 
 export function montarMensagemPessoa(pessoa: PessoaEscala, mes: string): string {
