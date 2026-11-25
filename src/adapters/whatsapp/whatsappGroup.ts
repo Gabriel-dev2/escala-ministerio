@@ -1,7 +1,7 @@
-import type { ContatoConhecido, DiretorioDeNomes } from './contactNames';
-import type { Participante } from './matchParticipants';
-import { normalizarNome } from './parseSchedule';
-import type { DadosDoGrupo, FonteDoGrupo, Mensageiro } from './ports';
+import type { ContatoConhecido, DiretorioDeNomes } from '../../domain/contactNames';
+import type { Participante } from '../../domain/matchParticipants';
+import { normalizarNome } from '../../domain/parseSchedule';
+import type { DadosDoGrupo, FonteDoGrupo, Mensageiro } from '../../application/ports';
 
 export interface ParticipanteDoGrupo {
   id: string;

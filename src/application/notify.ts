@@ -1,8 +1,8 @@
-import type { Encontrado, ResultadoCasamento } from './matchParticipants';
-import { montarAvisoFormato, montarAvisoNomes, montarMensagemPessoa } from './messages';
-import type { Escala } from './parseSchedule';
+import type { Encontrado, ResultadoCasamento } from '../domain/matchParticipants';
+import { montarAvisoFormato, montarAvisoNomes, montarMensagemPessoa } from '../domain/messages';
+import type { Escala } from '../domain/parseSchedule';
 import type { Logger, Mensageiro } from './ports';
-import { esperar } from './timing';
+import { esperar } from '../adapters/system/timing';
 
 const PAUSA_MINIMA_MS = 3000;
 const PAUSA_VARIAVEL_MS = 4000;

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { criarDiretorioDeNomes } from './contactNames';
+import { criarDiretorioDeNomes } from '../../domain/contactNames';
 import {
   ErroDeGrupo,
   localizarGrupo,

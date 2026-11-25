@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { loggerSilencioso } from './logger';
-import type { Participante } from './matchParticipants';
+import { loggerSilencioso } from '../adapters/system/logger';
+import type { Participante } from '../domain/matchParticipants';
 import type { ArmazenamentoDeDescricao, Mensageiro } from './ports';
 import { criarProcessadorDeEscala } from './scheduleProcessor';
 

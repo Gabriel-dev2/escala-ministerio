@@ -1,6 +1,6 @@
-import { casarParticipantes, type Participante } from './matchParticipants';
+import { casarParticipantes, type Participante } from '../domain/matchParticipants';
 import { avisarFormatoInvalido, avisarNomes, enviarEscalas } from './notify';
-import { parseSchedule, type Escala } from './parseSchedule';
+import { parseSchedule, type Escala } from '../domain/parseSchedule';
 import type { ArmazenamentoDeDescricao, FonteDoGrupo, Logger, Mensageiro } from './ports';
 
 export interface DependenciasDoProcessador {

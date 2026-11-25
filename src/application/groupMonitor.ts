@@ -1,7 +1,7 @@
-import type { DiretorioDeNomes } from './contactNames';
+import type { DiretorioDeNomes } from '../domain/contactNames';
 import type { ArmazenamentoDeDescricao, Logger } from './ports';
 import { criarProcessadorDeEscala, type ProcessadorDeEscala } from './scheduleProcessor';
-import { criarFonteDoGrupo, criarMensageiro, localizarGrupo, type SocketDeGrupo } from './whatsappGroup';
+import { criarFonteDoGrupo, criarMensageiro, localizarGrupo, type SocketDeGrupo } from '../adapters/whatsapp/whatsappGroup';
 
 export interface DependenciasDoMonitor {
   nomeGrupo: string;

@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ArmazenamentoDeDescricao } from './ports';
+import type { ArmazenamentoDeDescricao } from '../../application/ports';
 
 type Registro = Record<string, string>;
 

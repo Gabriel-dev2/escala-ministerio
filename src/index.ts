@@ -1,13 +1,13 @@
 import path from 'node:path';
-import { carregarArquivoEnv, carregarConfiguracao } from './config';
-import { criarDiretorioDeNomes } from './contactNames';
-import { criarMonitorDeGrupo } from './groupMonitor';
-import { loggerDeConsole as logger } from './logger';
-import { pausaAleatoriaEntreEnvios } from './notify';
-import { criarArmazenamentoEmArquivo } from './store';
-import { esperar } from './timing';
-import { conectarAoWhatsApp } from './whatsappConnection';
-import { ErroDeGrupo } from './whatsappGroup';
+import { carregarArquivoEnv, carregarConfiguracao } from './adapters/system/config';
+import { criarDiretorioDeNomes } from './domain/contactNames';
+import { criarMonitorDeGrupo } from './application/groupMonitor';
+import { loggerDeConsole as logger } from './adapters/system/logger';
+import { pausaAleatoriaEntreEnvios } from './application/notify';
+import { criarArmazenamentoEmArquivo } from './adapters/persistence/store';
+import { esperar } from './adapters/system/timing';
+import { conectarAoWhatsApp } from './adapters/whatsapp/whatsappConnection';
+import { ErroDeGrupo } from './adapters/whatsapp/whatsappGroup';
 
 const ARQUIVO_DA_ULTIMA_DESCRICAO = path.resolve('data', 'ultima-descricao.json');
 const ARQUIVO_DE_CONTATOS = path.resolve('data', 'contatos.json');

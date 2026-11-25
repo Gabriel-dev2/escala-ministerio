@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { criarDiretorioDeNomes } from './contactNames';
+import { criarDiretorioDeNomes } from '../domain/contactNames';
 import { criarMonitorDeGrupo } from './groupMonitor';
-import { loggerSilencioso } from './logger';
+import { loggerSilencioso } from '../adapters/system/logger';
 import type { ArmazenamentoDeDescricao } from './ports';
-import { ErroDeGrupo, type SocketDeGrupo } from './whatsappGroup';
+import { ErroDeGrupo, type SocketDeGrupo } from '../adapters/whatsapp/whatsappGroup';
 
 const ID_DO_BOT = '5581900000000:3@s.whatsapp.net';
 const ANA = 'ana@s.whatsapp.net';

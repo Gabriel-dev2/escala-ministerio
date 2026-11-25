@@ -1,4 +1,4 @@
-import type { Participante } from './matchParticipants';
+import type { Participante } from '../domain/matchParticipants';
 
 /**
  * Contratos que o caso de uso precisa do mundo exterior.

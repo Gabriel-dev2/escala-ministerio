@@ -6,8 +6,8 @@ import makeWASocket, {
 } from '@whiskeysockets/baileys';
 import pino from 'pino';
 import qrcode from 'qrcode-terminal';
-import type { DiretorioDeNomes } from './contactNames';
-import type { Logger } from './ports';
+import type { DiretorioDeNomes } from '../../domain/contactNames';
+import type { Logger } from '../../application/ports';
 
 const PASTA_DA_SESSAO = 'auth';
 const ATRASO_RECONEXAO_MS = 3000;
