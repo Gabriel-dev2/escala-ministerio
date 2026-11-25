@@ -37,7 +37,7 @@ export function criarProcessadorDeEscala(dependencias: DependenciasDoProcessador
 
     if (!resultado.ok) {
       logger.info('A descrição não segue o formato. Avisando no grupo.');
-      await avisarFormatoInvalido(mensageiro, resultado.erros);
+      await avisarFormatoInvalido(mensageiro, logger, resultado.erros);
       return;
     }
 
@@ -47,9 +47,12 @@ export function criarProcessadorDeEscala(dependencias: DependenciasDoProcessador
   async function enviarParaOsEscalados(escala: Escala, participantes: Participante[]): Promise<void> {
     const casamento = casarParticipantes(escala.pessoas, participantes);
     const { enviados, falhas } = await enviarEscalas({ mensageiro, logger, pausarEntreEnvios }, escala, casamento);
-    await avisarNomes(mensageiro, casamento);
+    await avisarNomes(mensageiro, logger, casamento);
 
-    logger.info(`Escala ${escala.mes}: ${enviados} envio(s) e ${falhas} falha(s).`);
+    logger.info(
+      `Escala ${escala.mes}: ${enviados} envio(s), ${falhas} falha(s), ` +
+        `${casamento.naoEncontrados.length} nome(s) não encontrado(s) e ${casamento.ambiguos.length} repetido(s).`,
+    );
   }
 
   return { processarSeDescricaoMudou };

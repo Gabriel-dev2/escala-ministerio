@@ -2,6 +2,7 @@
   "name": "escala-ministerio",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Bot de WhatsApp que lê a escala do mês na descrição do grupo e envia a cada pessoa só a sua parte no privado.",
   "scripts": {
     "start": "tsx src/index.ts",
@@ -12,7 +13,7 @@
     "node": ">=22"
   },
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.7.18",
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
     "pino": "^9.5.0",
     "qrcode-terminal": "^0.12.0"
   },

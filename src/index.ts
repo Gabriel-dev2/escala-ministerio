@@ -10,6 +10,7 @@ import { conectarAoWhatsApp } from './whatsappConnection';
 import { ErroDeGrupo } from './whatsappGroup';
 
 const ARQUIVO_DA_ULTIMA_DESCRICAO = path.resolve('data', 'ultima-descricao.json');
+const ARQUIVO_DE_CONTATOS = path.resolve('data', 'contatos.json');
 const ESPERA_SINCRONIZACAO_MS = 15_000;
 
 function encerrarPorErro(mensagem: string): never {
@@ -26,7 +27,7 @@ function tratarFalha(erro: unknown): void {
 async function iniciar(): Promise<void> {
   carregarArquivoEnv();
   const { nomeGrupo } = carregarConfiguracao();
-  const diretorio = criarDiretorioDeNomes();
+  const diretorio = criarDiretorioDeNomes(ARQUIVO_DE_CONTATOS);
 
   const monitor = criarMonitorDeGrupo({
     nomeGrupo,

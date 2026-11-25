@@ -40,15 +40,15 @@ export async function conectarAoWhatsApp(opcoes: OpcoesDeConexao): Promise<void>
 
 function registrarNomes(socket: WASocket, diretorio: DiretorioDeNomes): void {
   socket.ev.on('contacts.upsert', (contatos) => {
-    contatos.forEach((contato) => diretorio.registrarContato(contato));
+    diretorio.registrarContatos(contatos);
   });
 
   socket.ev.on('contacts.update', (contatos) => {
-    contatos.forEach((contato) => diretorio.registrarContato(contato));
+    diretorio.registrarContatos(contatos);
   });
 
   socket.ev.on('messaging-history.set', ({ contacts }) => {
-    contacts.forEach((contato) => diretorio.registrarContato(contato));
+    diretorio.registrarContatos(contacts);
   });
 
   socket.ev.on('messages.upsert', ({ messages }) => {
@@ -56,7 +56,9 @@ function registrarNomes(socket: WASocket, diretorio: DiretorioDeNomes): void {
       if (mensagem.key.fromMe) continue;
 
       // Em grupo o remetente vem em "participant"; no privado, em "remoteJid".
+      // No Baileys v7, o JID alternativo (número ou LID) vem em participantAlt / remoteJidAlt.
       diretorio.registrarRemetente(mensagem.key.participant ?? mensagem.key.remoteJid, mensagem.pushName);
+      diretorio.registrarRemetente(mensagem.key.participantAlt ?? mensagem.key.remoteJidAlt, mensagem.pushName);
     }
   });
 }

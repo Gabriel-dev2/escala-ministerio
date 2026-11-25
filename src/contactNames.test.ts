@@ -1,6 +1,19 @@
 import assert from 'node:assert/strict';
-import { test } from 'node:test';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { after, before, test } from 'node:test';
 import { criarDiretorioDeNomes } from './contactNames';
+
+let pasta: string;
+
+before(() => {
+  pasta = fs.mkdtempSync(path.join(os.tmpdir(), 'escala-contatos-'));
+});
+
+after(() => {
+  fs.rmSync(pasta, { recursive: true, force: true });
+});
 
 test('guarda o nome salvo e o nome de perfil do mesmo contato', () => {
   const diretorio = criarDiretorioDeNomes();
@@ -42,4 +55,26 @@ test('ignora nomes vazios e ids ausentes', () => {
   diretorio.registrarRemetente(undefined, 'Fantasma');
 
   assert.deepEqual(diretorio.nomesDe(['x@s.whatsapp.net', undefined]), []);
+});
+
+test('persiste os contatos em arquivo e recarrega ao iniciar novamente', () => {
+  const arquivo = path.join(pasta, 'contatos', 'nomes.json');
+  const primeiro = criarDiretorioDeNomes(arquivo);
+
+  primeiro.registrarContatos([
+    { id: '5581999999999@s.whatsapp.net', lid: '123@lid', name: 'Gabriel Lucas' },
+  ]);
+
+  const segundo = criarDiretorioDeNomes(arquivo);
+  assert.deepEqual(segundo.nomesDe(['123@lid']), ['Gabriel Lucas']);
+  assert.deepEqual(segundo.nomesDe(['5581999999999@s.whatsapp.net']), ['Gabriel Lucas']);
+});
+
+test('ignora arquivo de contatos ilegível e recomeça do zero', () => {
+  const arquivo = path.join(pasta, 'quebrado.json');
+  fs.writeFileSync(arquivo, '{ não é json', 'utf8');
+
+  const diretorio = criarDiretorioDeNomes(arquivo);
+
+  assert.deepEqual(diretorio.nomesDe(['123@lid']), []);
 });

@@ -136,6 +136,30 @@ test('descrição vazia é registrada e não envia nada', async () => {
   assert.equal(avisos.length, 0);
 });
 
+test('se o aviso no grupo falhar, não derruba o processamento e registra o texto', async () => {
+  const erros: string[] = [];
+  const processador = criarProcessadorDeEscala({
+    grupo: {
+      carregarDados: async () => ({ descricao: DESCRICAO, participantes: [{ jid: ANA, nomes: ['Ana'] }] }),
+    },
+    armazenamento: { ler: () => undefined, salvar: () => {} },
+    mensageiro: {
+      enviarPrivado: async () => {},
+      avisarGrupo: async () => {
+        throw new Error('No sessions');
+      },
+    },
+    logger: { info: () => {}, erro: (mensagem) => void erros.push(mensagem) },
+    pausarEntreEnvios: async () => {},
+  });
+
+  await processador.processarSeDescricaoMudou();
+
+  assert.equal(erros.length, 1);
+  assert.match(erros[0], /Falha ao enviar o aviso no grupo/);
+  assert.match(erros[0], /Lucas/);
+});
+
 test('a falha com uma pessoa não impede as outras de receberem', async () => {
   const { processador, privados } = montarCenario({ descricaoDoGrupo: DESCRICAO, jidQueFalha: ANA });
 

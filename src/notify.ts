@@ -42,13 +42,26 @@ export async function enviarEscalas(
   return resumo;
 }
 
-export function avisarFormatoInvalido(mensageiro: Mensageiro, erros: string[]): Promise<void> {
-  return mensageiro.avisarGrupo(montarAvisoFormato(erros));
+export function avisarFormatoInvalido(mensageiro: Mensageiro, logger: Logger, erros: string[]): Promise<void> {
+  return tentarAvisarGrupo(mensageiro, logger, montarAvisoFormato(erros));
 }
 
-export async function avisarNomes(mensageiro: Mensageiro, casamento: ResultadoCasamento): Promise<void> {
+export async function avisarNomes(
+  mensageiro: Mensageiro,
+  logger: Logger,
+  casamento: ResultadoCasamento,
+): Promise<void> {
   const aviso = montarAvisoNomes(casamento);
-  if (aviso) await mensageiro.avisarGrupo(aviso);
+  if (aviso) await tentarAvisarGrupo(mensageiro, logger, aviso);
+}
+
+/** O aviso no grupo é um complemento: se falhar, registra o motivo e o texto que não saiu. */
+async function tentarAvisarGrupo(mensageiro: Mensageiro, logger: Logger, texto: string): Promise<void> {
+  try {
+    await mensageiro.avisarGrupo(texto);
+  } catch (erro) {
+    logger.erro(`Falha ao enviar o aviso no grupo. Texto que não foi enviado:\n${texto}\nMotivo:`, erro);
+  }
 }
 
 /** Uma falha não pode impedir que as demais pessoas recebam a escala. */

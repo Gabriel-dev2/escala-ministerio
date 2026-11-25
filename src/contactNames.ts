@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
 export interface ContatoConhecido {
   id?: string;
   lid?: string;
@@ -11,34 +14,57 @@ export interface ContatoConhecido {
 /** Guarda os nomes que o bot conhece para cada id do WhatsApp. */
 export interface DiretorioDeNomes {
   registrarContato(contato: ContatoConhecido): void;
+  registrarContatos(contatos: ContatoConhecido[]): void;
   registrarRemetente(id: string | null | undefined, nomeDePerfil: string | null | undefined): void;
   nomesDe(ids: Array<string | undefined>): string[];
 }
 
-export function criarDiretorioDeNomes(): DiretorioDeNomes {
-  const nomesPorId = new Map<string, Set<string>>();
+export function criarDiretorioDeNomes(arquivo?: string): DiretorioDeNomes {
+  const nomesPorId = arquivo ? carregarNomes(arquivo) : new Map<string, Set<string>>();
 
-  function guardar(ids: Array<string | undefined>, nome: string | null | undefined): void {
+  function guardar(ids: Array<string | undefined>, nome: string | null | undefined): boolean {
     const nomeLimpo = nome?.trim();
-    if (!nomeLimpo) return;
+    if (!nomeLimpo) return false;
 
+    let alterou = false;
     for (const id of ids) {
       if (!id) continue;
       const nomes = nomesPorId.get(id) ?? new Set<string>();
-      nomes.add(nomeLimpo);
-      nomesPorId.set(id, nomes);
+      if (!nomes.has(nomeLimpo)) {
+        nomes.add(nomeLimpo);
+        nomesPorId.set(id, nomes);
+        alterou = true;
+      }
     }
+    return alterou;
+  }
+
+  function registrarUmContato(contato: ContatoConhecido): boolean {
+    const ids = [contato.id, contato.lid, contato.phoneNumber];
+    const salvouNome = guardar(ids, contato.name);
+    const salvouPerfil = guardar(ids, contato.notify);
+    return salvouNome || salvouPerfil;
+  }
+
+  function persistirSeAlterou(alterou: boolean): void {
+    if (alterou && arquivo) gravarNomes(arquivo, nomesPorId);
   }
 
   return {
     registrarContato(contato) {
-      const ids = [contato.id, contato.lid, contato.phoneNumber];
-      guardar(ids, contato.name);
-      guardar(ids, contato.notify);
+      persistirSeAlterou(registrarUmContato(contato));
+    },
+
+    registrarContatos(contatos) {
+      let alterou = false;
+      for (const contato of contatos) {
+        if (registrarUmContato(contato)) alterou = true;
+      }
+      persistirSeAlterou(alterou);
     },
 
     registrarRemetente(id, nomeDePerfil) {
-      guardar([id ?? undefined], nomeDePerfil);
+      persistirSeAlterou(guardar([id ?? undefined], nomeDePerfil));
     },
 
     nomesDe(ids) {
@@ -49,4 +75,26 @@ export function criarDiretorioDeNomes(): DiretorioDeNomes {
       return [...nomes];
     },
   };
+}
+
+function carregarNomes(arquivo: string): Map<string, Set<string>> {
+  try {
+    const dados = JSON.parse(fs.readFileSync(arquivo, 'utf8')) as Record<string, string[]>;
+    const mapa = new Map<string, Set<string>>();
+    for (const [id, nomes] of Object.entries(dados)) {
+      if (Array.isArray(nomes)) mapa.set(id, new Set(nomes));
+    }
+    return mapa;
+  } catch {
+    return new Map<string, Set<string>>();
+  }
+}
+
+function gravarNomes(arquivo: string, nomesPorId: Map<string, Set<string>>): void {
+  const objeto: Record<string, string[]> = {};
+  for (const [id, nomes] of nomesPorId) {
+    objeto[id] = [...nomes];
+  }
+  fs.mkdirSync(path.dirname(arquivo), { recursive: true });
+  fs.writeFileSync(arquivo, JSON.stringify(objeto, null, 2), 'utf8');
 }

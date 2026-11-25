@@ -6,3 +6,6 @@ auth/
 
 # Último texto de descrição já processado
 data/
+
+# package-lock para evitar subir arquivo muito grande para o repositório
+package-lock.json
