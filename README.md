@@ -72,22 +72,25 @@ npm run typecheck  # checagem de tipos
 
 ## Como o código está organizado
 
-A regra de negócio não conhece o WhatsApp, o disco nem o console: ela conversa com contratos (`src/ports.ts`), e quem usa essas tecnologias fica nas bordas. Por isso quase tudo é testado sem WhatsApp.
+O projeto segue a **Arquitetura Hexagonal (Ports & Adapters)**: o domínio e os casos de uso não conhecem o WhatsApp, o disco nem o console — eles conversam apenas com contratos (`src/application/ports.ts`), e quem usa essas tecnologias fica nos adaptadores. Por isso quase tudo é testado sem WhatsApp.
 
-**Regra de negócio** (sem dependências externas)
-- `src/parseSchedule.ts`: lê a descrição e agrupa por pessoa.
-- `src/matchParticipants.ts`: associa nomes da escala a participantes.
-- `src/messages.ts`: monta os textos dos privados e dos avisos.
-- `src/notify.ts`: envia os privados (um de cada vez, com pausa) e os avisos.
-- `src/scheduleProcessor.ts`: o caso de uso. Se a descrição mudou, lê, casa os nomes, envia e avisa.
+**Domínio** (`src/domain/`, regras puras)
+- `parseSchedule.ts`: lê a descrição e agrupa por pessoa.
+- `matchParticipants.ts`: associa nomes da escala a participantes.
+- `messages.ts`: monta os textos dos privados e dos avisos.
+- `contactNames.ts`: guarda e persiste os nomes que o bot conhece de cada pessoa.
 
-**Bordas** (falam com o mundo exterior)
-- `src/whatsappConnection.ts`: único arquivo que usa o Baileys direto. Conecta, mostra o QR, reconecta e repassa os eventos.
-- `src/whatsappGroup.ts`: localiza o grupo e adapta o socket aos contratos do caso de uso.
-- `src/groupMonitor.ts`: decide quando verificar a descrição e evita duas verificações ao mesmo tempo.
-- `src/contactNames.ts`: guarda os nomes que o bot conhece de cada pessoa.
-- `src/store.ts`: guarda o último texto processado em arquivo.
-- `src/config.ts`, `src/logger.ts`, `src/timing.ts`: configuração, log e espera.
+**Aplicação** (`src/application/`, casos de uso e portas)
+- `ports.ts`: define os contratos (`FonteDoGrupo`, `Mensageiro`, `ArmazenamentoDeDescricao`, `Logger`).
+- `scheduleProcessor.ts`: o caso de uso principal. Se a descrição mudou, lê, casa os nomes, envia e avisa.
+- `groupMonitor.ts`: decide quando verificar a descrição e evita duas verificações ao mesmo tempo.
+- `notify.ts`: envia os privados (um de cada vez, com pausa) e os avisos.
+
+**Adaptadores** (`src/adapters/`, falam com o mundo exterior)
+- `whatsapp/whatsappConnection.ts`: único arquivo que usa o Baileys direto. Conecta, mostra o QR, reconecta e repassa os eventos.
+- `whatsapp/whatsappGroup.ts`: localiza o grupo e adapta o socket aos contratos da aplicação.
+- `persistence/store.ts`: guarda o último texto processado em arquivo.
+- `system/config.ts`, `system/logger.ts`, `system/timing.ts`: configuração, log e espera.
 
 **Montagem**
-- `src/index.ts`: cria as peças, liga umas às outras e inicia. Não tem regra de negócio.
+- `src/index.ts`: cria as peças, liga os adaptadores às portas e inicia. Não tem regra de negócio.
